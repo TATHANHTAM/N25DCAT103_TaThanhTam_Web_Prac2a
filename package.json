@@ -1,0 +1,13 @@
+{
+  "name": "lab2a-microservices-shop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lab 2a - Node.js microservices shop",
+  "scripts": {
+    "test": "npm run test:product && npm run test:order && npm run test:auth",
+    "test:product": "npm --prefix product-service test",
+    "test:order": "npm --prefix order-service test",
+    "test:auth": "npm --prefix auth-service test"
+  }
+}
+

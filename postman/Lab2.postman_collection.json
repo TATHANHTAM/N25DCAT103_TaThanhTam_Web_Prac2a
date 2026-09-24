@@ -1,0 +1,288 @@
+{
+  "info": {
+    "_postman_id": "31cefc4d-94bf-42bc-83f5-1b754325a2a0",
+    "name": "Lab2 Microservices",
+    "description": "Postman Collection kiểm thử Product, Order và Auth Service qua API Gateway.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3001" },
+    { "key": "gateway_url", "value": "http://localhost:3000" },
+    { "key": "email", "value": "student@example.com" },
+    { "key": "password", "value": "Student123" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "user_id", "value": "1" },
+    { "key": "product_id", "value": "1" },
+    { "key": "order_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": { "method": "GET", "url": "{{gateway_url}}/health" },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Gateway is healthy', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lab Student\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{gateway_url}}/api/auth/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Register returns 201 or existing account', () => pm.expect([201, 409]).to.include(pm.response.code));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('user_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{gateway_url}}/api/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login thành công', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('access_token', data.accessToken);",
+                  "pm.collectionVariables.set('refresh_token', data.refreshToken);",
+                  "pm.collectionVariables.set('user_id', data.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{gateway_url}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Me returns current user', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}" },
+            "url": "{{gateway_url}}/api/auth/refresh"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Refresh thành công', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.collectionVariables.set('access_token', data.accessToken);",
+                  "pm.collectionVariables.set('refresh_token', data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/api/products?page=1&limit=5&sortBy=createdAt&order=desc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('List returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Có pagination', () => pm.expect(pm.response.json()).to.have.property('pagination'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lab Product {{$timestamp}}\",\n  \"price\": 100000,\n  \"stock\": 20,\n  \"description\": \"Sản phẩm tạo từ Postman\"\n}"
+            },
+            "url": "{{gateway_url}}/api/products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create returns 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('product_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"\",\n  \"price\": -1\n}" },
+            "url": "{{gateway_url}}/api/products"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Invalid data returns 422', () => pm.response.to.have.status(422));"] }
+            }
+          ]
+        },
+        {
+          "name": "Get Product",
+          "request": { "method": "GET", "url": "{{gateway_url}}/api/products/{{product_id}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Get product returns 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Upload Product Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "image", "type": "file", "src": [] }]
+            },
+            "url": "{{gateway_url}}/api/products/{{product_id}}/image",
+            "description": "Chọn file ảnh và cấu hình Cloudinary trước khi chạy."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Lab Student\",\n  \"customerEmail\": \"{{email}}\",\n  \"items\": [\n    { \"productId\": {{product_id}}, \"quantity\": 2 }\n  ],\n  \"shippingAddress\": {\n    \"street\": \"1 Nguyễn Huệ\",\n    \"city\": \"TP.HCM\",\n    \"district\": \"Quận 1\"\n  }\n}"
+            },
+            "url": "{{gateway_url}}/api/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create order returns 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('order_id', pm.response.json().data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{gateway_url}}/api/orders/customer/{{user_id}}?page=1&limit=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('List orders returns 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"confirmed\"\n}" },
+            "url": "{{gateway_url}}/api/orders/{{order_id}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Update status returns 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Soft Delete Product",
+          "request": { "method": "DELETE", "url": "{{gateway_url}}/api/products/{{product_id}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Delete returns 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
