@@ -76,13 +76,19 @@ Sau khi Docker Compose đã healthy, chạy kiểm thử end-to-end:
 powershell -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1
 ```
 
+Sau khi đã cấu hình Cloudinary, kiểm tra upload ảnh thật:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\cloudinary-test.ps1
+```
+
 Hoặc import file sau vào Postman:
 
 ```text
 postman/Lab2.postman_collection.json
 ```
 
-Khi chạy toàn Collection, thứ tự đã được sắp sẵn: Health -> Auth -> Products -> Orders -> Cleanup. Request upload ảnh cần chọn file thủ công và cấu hình Cloudinary.
+Khi chạy toàn Collection, thứ tự đã được sắp sẵn: Health -> Auth -> Products -> Orders -> Cleanup. Request upload ảnh dùng file mẫu `postman/product-test.svg` sau khi cấu hình Cloudinary.
 
 ## 5. Product API
 
