@@ -160,28 +160,18 @@ docker compose exec product-service npx prisma db seed
 
 Lệnh `down -v` xóa dữ liệu PostgreSQL, MongoDB và Redis local.
 
-## 10. Deploy một service
+## 10. Deploy public
 
-Phần code đã sẵn sàng bằng Dockerfile. Để đạt tiêu chí deploy của lab, cần tài khoản bên ngoài và connection string thật.
+Product Service đã được deploy bằng Docker trên Render, sử dụng PostgreSQL 15 cùng region Singapore. Migration được chạy tự động bởi Dockerfile khi service khởi động.
 
-Product Service cần:
+| Thành phần | URL |
+|---|---|
+| Product Service | `https://lab2a-product-service.onrender.com` |
+| Health Check | `https://lab2a-product-service.onrender.com/health` |
+| Swagger UI | `https://lab2a-product-service.onrender.com/api-docs` |
+| Products API | `https://lab2a-product-service.onrender.com/api/products` |
 
-```env
-NODE_ENV=production
-PORT=3001
-DATABASE_URL=<Supabase PostgreSQL connection string>
-REDIS_URL=<Redis production URL, có thể bỏ nếu chưa dùng cache>
-ALLOWED_ORIGINS=<frontend hoặc gateway domain>
-```
-
-Các bước theo lab:
-
-1. Đẩy repository lên GitHub.
-2. Tạo project Railway hoặc Render từ repository.
-3. Chọn thư mục gốc `product-service`.
-4. Thêm các environment variables phía trên.
-5. Deploy và chạy `npx prisma migrate deploy`.
-6. Bật public domain và kiểm tra `/health`, `/api-docs`.
+Môi trường public đã được kiểm tra thành công với health check, Swagger, tạo sản phẩm và đọc chi tiết sản phẩm. Free instance có thể cần khoảng 50 giây để khởi động lại sau thời gian không hoạt động.
 
 Không commit `.env`, database password, JWT secret hay Cloudinary secret.
 
@@ -198,4 +188,4 @@ Không commit `.env`, database password, JWT secret hay Cloudinary secret.
 - [x] Auth Service và JWT Gateway.
 - [x] Cloudinary upload.
 - [x] Redis cache.
-- [ ] Deploy public: cần tài khoản và secret của sinh viên.
+- [x] Deploy Product Service public trên Render.
